@@ -1,15 +1,24 @@
 //@ts-nocheck
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { QrReader } from 'react-qr-reader';
-import axios from "axios";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { idlFactory as appId } from '../../../backend/backend.did.js';
 
-
+const canisterID = 'canister id here';
 
 export default function Scan() {
     const [data, setData] = useState('No result');
     const [loading, setLoading] = useState(true);
+    const [myApp, setMyApp] = useState(null);
+
+    useEffect(() => {
+        const agent = new HttpAgent();
+        const myApp = Actor.createActor(appIdl, { agent, canisterId: canisterID });
+        setMyApp(myApp);
+    }, []);
+
     return (
         <>
             <Head>
@@ -18,25 +27,24 @@ export default function Scan() {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <main className="justify-center items-center">
-                <diva className="pl-30">
+                <div className="pl-30">
                     <h1
                         className="pl-10 font-extrabold text-transparent text-8xl bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                         Scan.
                     </h1>
-                </diva>
+                </div>
                 <div className="h-screen flex items-center justify-center">
                     <div className="w-1/2 h-full">
                         <QrReader
                             onResult={async (result, error) => {
                                 if (!!result) {
                                     setData(result?.text);
-                                    await axios.post("http://localhost:8080/scan", { data: result.text }).then((value) => {
-                                        if (value.data.found == false) {
-                                            window.open("http://localhost:3000/fake");
-                                        } else {
-                                            window.open("http://localhost:3000/real");
-                                        }
-                                    })
+                                    const value = await myApp.scan({ data: result.text });
+                                    if (value.found == false) {
+                                        window.open("http://localhost:3000/fake");
+                                    } else {
+                                        window.open("http://localhost:3000/real");
+                                    }
                                 }
                                 if (!!error) {
                                     console.info(error);

@@ -1,0 +1,13 @@
+{
+    "canisters": {
+        "kybra_backend": {
+            "type": "custom",
+            "build": "python3 -m kybra kybra_backend backend.py backend.did",
+            "post_install": ".kybra/kybra_backend/post_install.sh",
+            "candid": "backend.did",
+            "wasm": ".kybra/kybra_backend/kybra_backend.wasm",
+            "gzip": true
+        }
+    }
+}
+

@@ -1,22 +1,27 @@
 //@ts-nocheck
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import QRCode from "react-qr-code";
-import axios from "axios";
-import OpenAI from "openai";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { idlFactory as appId } from '../../../backend/backend.did.js';
 
-const openai = new OpenAI({
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
-    dangerouslyAllowBrowser: true, // TODO: fix this
-});
+const canisterID = 'canister id here';
 
-export default function Scan() {
+export default function Make() {
     const [productName, setProductName] = useState('');
     const [productNum, setProductNum] = useState(0);
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState('');
     const [productIds, setProductIds] = useState([]);
+    const [myApp, setMyApp] = useState(null);
+
+    useEffect(() => {
+        const agent = new HttpAgent();
+        const myApp = Actor.createActor(appIdl, { agent, canisterId: canisterID });
+        setMyApp(myApp);
+    }, []);
+
     return (
         <>
             <Head>
@@ -54,23 +59,13 @@ export default function Scan() {
                             <textarea onChange={(e) => {
                                 setDescription(e.target.value);
                             }} id="description" className="border rounded-lg border-slate-300 px-2 h-full" placeholder="Description"></textarea>
-                            <button className="bg-purple-500 rounded-2xl text-white px-2 py-1" onClick={async (e) => {
-                                 const completion = await openai.chat.completions.create({
-                                    messages: [{ role: 'user', content: `Write a description for ${productName}` }],
-                                    model: 'gpt-3.5-turbo',
-                                  });
-                                  document.getElementById("description").innerText = completion.choices[0].message.content;
-                            }}>Generate</button>
                         </div>
                         <div>
                             <button onClick={async (e) => {
-                                // productName, productNum
-                                await axios.post("http://localhost:8080/make", { productName: productName, amount: parseInt(productNum), location: location }).then((value) => {
-                                    console.log(value.data);
-                                    setProductIds(value.data.data.map((item) => {
-                                        return item.productId;
-                                    }));
-                                })
+                                const value = await myApp.make({ productName: productName, amount: parseInt(productNum), location: location });
+                                setProductIds(value.data.map((item) => {
+                                    return item.productId;
+                                }));
                             }} className="bg-blue-500 font-bold text-white px-4 rounded-3xl py-1">
                                 Make
                             </button>

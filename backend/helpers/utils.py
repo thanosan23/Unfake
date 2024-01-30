@@ -23,7 +23,7 @@ class Block:
     def generate_qr_code_data(self):
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            error_correctio=qrcode.constants.ERROR_CORRECT_L,
             box_size=10,
             border=4,
         )
